@@ -1,1 +1,101 @@
 
+// Java Student Management System using Swing and JDBC
+// Note: You'll need to configure MySQL DB, JDBC Driver, and add error handling for production use
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.sql.*;
+
+public class StudentManagementSystem extends JFrame implements ActionListener {
+    JTextField idField, nameField, courseField;
+    JButton addButton, updateButton, deleteButton, searchButton;
+    Connection conn;
+
+    public StudentManagementSystem() {
+        setTitle("Student Management System");
+        setLayout(new GridLayout(5, 2));
+        setSize(400, 300);
+
+        // GUI Components
+        add(new JLabel("Student ID:"));
+        idField = new JTextField();
+        add(idField);
+
+        add(new JLabel("Name:"));
+        nameField = new JTextField();
+        add(nameField);
+
+        add(new JLabel("Course:"));
+        courseField = new JTextField();
+        add(courseField);
+
+        addButton = new JButton("Add");
+        updateButton = new JButton("Update");
+        deleteButton = new JButton("Delete");
+        searchButton = new JButton("Search");
+
+        addButton.addActionListener(this);
+        updateButton.addActionListener(this);
+        deleteButton.addActionListener(this);
+        searchButton.addActionListener(this);
+
+        add(addButton); add(updateButton);
+        add(deleteButton); add(searchButton);
+
+        connectDatabase();
+        setVisible(true);
+    }
+
+    public void connectDatabase() {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/student_db", "root", "password");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Database connection failed: " + e.getMessage());
+        }
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        try {
+            String id = idField.getText();
+            String name = nameField.getText();
+            String course = courseField.getText();
+            Statement stmt = conn.createStatement();
+
+            if (e.getSource() == addButton) {
+                stmt.executeUpdate("INSERT INTO students VALUES ('" + id + "', '" + name + "', '" + course + "')");
+                JOptionPane.showMessageDialog(this, "Student added successfully");
+            } else if (e.getSource() == updateButton) {
+                stmt.executeUpdate("UPDATE students SET name='" + name + "', course='" + course + "' WHERE id='" + id + "'");
+                JOptionPane.showMessageDialog(this, "Student updated successfully");
+            } else if (e.getSource() == deleteButton) {
+                stmt.executeUpdate("DELETE FROM students WHERE id='" + id + "'");
+                JOptionPane.showMessageDialog(this, "Student deleted successfully");
+            } else if (e.getSource() == searchButton) {
+                ResultSet rs = stmt.executeQuery("SELECT * FROM students WHERE id='" + id + "'");
+                if (rs.next()) {
+                    nameField.setText(rs.getString("name"));
+                    courseField.setText(rs.getString("course"));
+                } else {
+                    JOptionPane.showMessageDialog(this, "Student not found");
+                }
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        new StudentManagementSystem();
+    }
+}
+
+// SQL Script for MySQL
+// CREATE DATABASE student_db;
+// USE student_db;
+// CREATE TABLE students (
+//     id VARCHAR(10) PRIMARY KEY,
+//     name VARCHAR(100),
+//     course VARCHAR(100)
+// );
